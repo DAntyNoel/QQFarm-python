@@ -1,3 +1,6 @@
+
+3rd
+
 __pycache__/
 *.py[cod]
 
@@ -5,3 +8,6 @@ __pycache__/
 .secrets/
 auth_code.json
 qq_login_qr.png
+
+output
+debug

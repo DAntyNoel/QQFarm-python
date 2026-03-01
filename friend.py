@@ -359,3 +359,43 @@ def collect_friends_farm_status(auth_code: str, proto_dir: Path, limit: int = 0)
         client.close()
         if proto.temp_dir.exists():
             shutil.rmtree(proto.temp_dir, ignore_errors=True)
+
+
+def collect_friends_mature_status(auth_code: str, proto_dir: Path, limit: int = 0) -> dict[str, Any]:
+    """仅返回成熟作物巡查结果。
+
+    - 始终返回是否存在成熟作物
+    - 仅当好友存在成熟作物时，返回该好友的详细成熟地块信息
+    """
+    snapshot = collect_friends_farm_status(auth_code=auth_code, proto_dir=proto_dir, limit=limit)
+    mature_friends: list[dict[str, Any]] = []
+
+    for friend in list(snapshot.get("friends") or []):
+        farm = friend.get("farm") if isinstance(friend, dict) else None
+        if not isinstance(farm, dict):
+            continue
+
+        mature_lands = list(farm.get("mature_lands") or [])
+        if not mature_lands:
+            continue
+
+        mature_friends.append(
+            {
+                "gid": int(friend.get("gid") or 0),
+                "name": str(friend.get("name") or ""),
+                "remark": str(friend.get("remark") or ""),
+                "level": int(friend.get("level") or 0),
+                "mature_land_count": len(mature_lands),
+                "mature_lands": mature_lands,
+                "stealable_lands": list(farm.get("stealable_lands") or []),
+            }
+        )
+
+    return {
+        "me": snapshot.get("me") or {},
+        "checked_friend_count": int(snapshot.get("friend_count") or 0),
+        "has_mature": len(mature_friends) > 0,
+        "mature_friend_count": len(mature_friends),
+        "mature_friends": mature_friends,
+        "checked_at": int(time.time()),
+    }
